@@ -5,11 +5,6 @@ using System.Collections;
 public class DemoScene : MonoBehaviour 
 {
     private ObjectsPool poolObj;
-
-    public GameObject prefabCube;
-    public GameObject prefabCapsule;
-    public GameObject prefabSphere;
-
     public GameObject[] prefabs;
 
     private void Start()
@@ -35,7 +30,7 @@ public class DemoScene : MonoBehaviour
             for (int i = 0; i < prefabs.Length; i++ )
             {
                 Vector3 randomPos = Random.insideUnitSphere * 10;
-                ObjectsPool.Spawn(prefabs[i], randomPos, Quaternion.identity);
+                prefabs[i].Spawn(randomPos, Quaternion.identity);
                 yield return new WaitForSeconds(0.1f);
             }
             yield return new WaitForSeconds(0.2f);

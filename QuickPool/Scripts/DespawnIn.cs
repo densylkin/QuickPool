@@ -13,6 +13,6 @@ public class DespawnIn : MonoBehaviour
     private IEnumerator Destroy()
     {
         yield return new WaitForSeconds(time);
-        ObjectsPool.Despawn(gameObject);
+        gameObject.Despawn();
     }
 }
