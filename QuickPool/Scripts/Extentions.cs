@@ -1,15 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public static class Extentions
+namespace QuickPool
 {
-    public static void Spawn(this GameObject prefabToSpawn, Vector3 pos, Quaternion rot)
+    public static class Extentions
     {
-        ObjectsPool.Spawn(prefabToSpawn, pos, rot);
-    }
+        public static GameObject Spawn(this GameObject prefabToSpawn, Vector3 pos, Quaternion rot)
+        {
+            return ObjectsPool.Spawn(prefabToSpawn, pos, rot);
+        }
 
-    public static void Despawn(this GameObject objToDespawn)
-    {
-        ObjectsPool.Despawn(objToDespawn);
+        public static void Despawn(this GameObject objToDespawn)
+        {
+            ObjectsPool.Despawn(objToDespawn);
+        }
     }
 }

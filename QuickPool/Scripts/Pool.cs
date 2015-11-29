@@ -2,174 +2,279 @@
 using System.Collections.Generic;
 using System.Linq;
 
-public enum DespawnMode
+namespace QuickPool
 {
-    Deactivate,
-    Move
-}
 
-[System.Serializable]
-public class Pool
-{
-    #region PublicFields
-
-    public GameObject prefab = null;
-    public GameObject Prefab
+    public enum DespawnMode
     {
-        get { return prefab; }
-        set
+        Deactivate,
+        Move
+    }
+
+    public enum PoolType
+    {
+        GameObject,
+        AudioSource,
+        ParticleSystem
+    }
+
+    [System.Serializable]
+    public class Pool
+    {
+        #region PublicFields
+
+        public GameObject prefab = null;
+        public GameObject Prefab
         {
-            if (Application.isEditor)
+            get { return prefab; }
+            set
             {
-                prefab = value;
-                if (prefab != null && m_Root != null)
-                    m_Root.name = poolName + "_Root";
+                if (Application.isEditor)
+                {
+                    prefab = value;
+                    if (prefab != null && m_Root != null)
+                        m_Root.name = poolName + "_Root";
+                }
             }
         }
-    }
 
-    public DespawnMode mode = DespawnMode.Deactivate;
-    public Vector3 despawnPos = new Vector3(-100, -100, -100);
-    public List<GameObject> despawned = new List<GameObject>();
-    public List<GameObject> spawned = new List<GameObject>();
-    public Transform m_Root;
-    public bool allowMore = false;
-    public bool debugMessages = true;
-    public int size;
+        public DespawnMode mode = DespawnMode.Deactivate;
+        public Vector3 despawnPos = new Vector3(-100, -100, -100);
+        public List<GameObject> despawned = new List<GameObject>();
+        public List<GameObject> spawned = new List<GameObject>();
+        public Transform m_Root;
+        public bool allowMore = false;
+        public bool debugMessages = true;
+        public int size;
+        public bool playOnSpawn;
+        public bool stopOnDespawn;
+        #endregion
 
-    #endregion
+        #region Properties
 
-    #region Properties
+        public int spawnedCount { get { return spawned.Count; } }
+        public int totalCount { get { return spawned.Count + despawned.Count; } }
+        public int leftCount { get { return despawned.Count; } }
+        public string poolName { get { return prefab == null ? "None" : prefab.name; } }
+        public bool Empty { get { return despawned.Count == 0; } }
+        public bool Audio;
+        public bool Particles;
+        public bool GO { get { return !Audio && !Particles; } }
 
-    public int spawnedCount { get { return spawned.Count; } }
-    public int totalCount { get { return spawned.Count + despawned.Count; } }
-    public int leftCount { get { return despawned.Count; } }
-    public string poolName { get { return prefab == null ? "None" : prefab.name; } }
-    public bool Empty { get { return !despawned.Any(); } }
-    #endregion
-
-
-#if UNITY_EDITOR
-    public bool foldout;
-#endif
-
-    /// <summary>
-    /// Creates new pool
-    /// </summary>
-    /// <returns></returns>
-    public Pool(GameObject _prefab)
-    {
-        GameObject root = new GameObject();
-        this.Prefab = _prefab;
-#if UNITY_EDITOR
-        UnityEditor.Undo.RegisterCreatedObjectUndo(root, "root");
-#endif
-        root.name = prefab.name + "_Root_Object";
-        root.transform.position = Vector3.zero;
-        root.transform.rotation = Quaternion.identity;
-        m_Root = root.transform;
-        root.transform.parent = ObjectsPool.Instance.transform;
-        size = 1;
-    }
-
-    /// <summary>
-    /// Preinstantiates all objects
-    /// </summary>
-    public void PreInstantiate()
-    {
-        for (int i = 0; i < size; i++)
+        public PoolType Type
         {
-            if (totalCount > size)
-                break;
+            get
+            {
+                if (prefab.GetComponent<AudioSource>() != null)
+                    return PoolType.AudioSource;
+                else if (prefab.GetComponent<ParticleSystem>() != null)
+                    return PoolType.ParticleSystem;
+                else
+                    return PoolType.GameObject;
+            }
+        }
+
+        #endregion
+
+
+#if UNITY_EDITOR
+        public bool foldout;
+#endif
+
+        /// <summary>
+        /// Creates new pool
+        /// </summary>
+        /// <returns></returns>
+        public Pool(GameObject _prefab)
+        {
+            GameObject root = new GameObject();
+            this.Prefab = _prefab;
+#if UNITY_EDITOR
+            UnityEditor.Undo.RegisterCreatedObjectUndo(root, "root");
+#endif
+            root.name = prefab.name + "_Root_Object";
+            root.transform.position = Vector3.zero;
+            root.transform.rotation = Quaternion.identity;
+            m_Root = root.transform;
+            root.transform.parent = ObjectsPool.Instance.transform;
+            size = 1;
+
+            Audio = Prefab.GetComponent<AudioSource>() != null;
+            Particles = Prefab.GetComponent<ParticleSystem>() != null;
+        }
+
+        /// <summary>
+        /// Preinstantiates all objects
+        /// </summary>
+        public void PreInstantiate()
+        {
+            for (int i = 0; i < size; i++)
+            {
+                if (totalCount > size)
+                    break;
+
+                GameObject obj = GameObject.Instantiate(prefab, m_Root.position, m_Root.rotation) as GameObject;
+#if UNITY_EDITOR
+                UnityEditor.Undo.RegisterCreatedObjectUndo(obj, "instantiated_obj");
+#endif
+                despawned.Add(obj);
+                obj.transform.SetParent(m_Root);
+                if (mode == DespawnMode.Deactivate)
+                    obj.SetActive(false);
+                else
+                    obj.transform.position = despawnPos;
+
+                obj.name = poolName;
+            }
+
+            if (ObjectsPool.Instance.debugMessages && debugMessages)
+                Debug.Log("Pool " + poolName + " spawned");
+        }
+
+        /// <summary>
+        /// Adds new object to pool if pool is empty
+        /// </summary>
+        public void AddewObject()
+        {
+            if (!Empty || !allowMore)
+                return;
 
             GameObject obj = GameObject.Instantiate(prefab, m_Root.position, m_Root.rotation) as GameObject;
-#if UNITY_EDITOR
-            UnityEditor.Undo.RegisterCreatedObjectUndo(obj, "instantiated_obj");
-#endif
             despawned.Add(obj);
             obj.transform.SetParent(m_Root);
+            obj.SetActive(false);
+
+            if (ObjectsPool.Instance.debugMessages && debugMessages)
+                Debug.Log("New object of " + poolName + "added");
+        }
+
+        /// <summary>
+        /// Used to spawn objects
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="rot"></param>
+        /// <returns></returns>
+        public GameObject Spawn(Vector3 pos, Quaternion rot)
+        {
+            var obj = Pop();
+
+            if (obj == null)
+            {
+                if (ObjectsPool.Instance.debugMessages)
+                    Debug.Log("No such object left");
+                return null;
+            }
+
+            var objt = obj.transform;
+            objt.position = pos;
+            objt.rotation = rot;
+
+            if (ObjectsPool.Instance.spawnDespawnMessages)
+                obj.SendMessage("OnSpawn", SendMessageOptions.DontRequireReceiver);
+
+            if(playOnSpawn)
+            {
+                if (Audio)
+                    obj.GetComponent<AudioSource>().Play();
+
+                if (Particles)
+                    obj.GetComponent<ParticleSystem>().Play();
+            }
+
+            return obj;
+        }
+
+        /// <summary>
+        /// Used to despawn message
+        /// </summary>
+        /// <param name="target"></param>
+        public void Despawn(GameObject target)
+        {
+            if (!spawned.Contains(target))
+                return;
+
+            Push(target);
+
+            if (ObjectsPool.Instance.spawnDespawnMessages)
+                target.SendMessage("OnDespawn", SendMessageOptions.DontRequireReceiver);
+
+            if (stopOnDespawn)
+            {
+                if (Audio)
+                    target.GetComponent<AudioSource>().Stop();
+
+                if (Particles)
+                    target.GetComponent<ParticleSystem>().Stop();
+            }
+        }
+
+        /// <summary>
+        /// Gets an item from pool
+        /// </summary>
+        /// <returns></returns>
+        public GameObject Pop()
+        {
+            if (Empty)
+            {
+                if (allowMore)
+                {
+                    AddewObject();
+                    size++;
+                }
+                else
+                    return null;
+            }
+
+            GameObject obj = despawned[0];
+
+            if (obj == null)
+                return null;
+
+            despawned.Remove(obj);
+            spawned.Add(obj);
+            if (mode == DespawnMode.Deactivate)
+                obj.SetActive(true);
+            obj.transform.parent = null;
+
+            return obj;
+        }
+
+        /// <summary>
+        /// Send item to pool
+        /// </summary>
+        /// <param name="obj"></param>
+        public void Push(GameObject obj)
+        {
+            if (despawned.Contains(obj) || !spawned.Contains(obj))
+                return;
+
+            spawned.Remove(obj);
+            despawned.Add(obj);
             if (mode == DespawnMode.Deactivate)
                 obj.SetActive(false);
             else
                 obj.transform.position = despawnPos;
+            obj.transform.parent = m_Root;
         }
 
-        if (ObjectsPool.Instance.debugMessages && debugMessages)
-            Debug.Log("Pool " + poolName + " spawned");
-    }
-
-    /// <summary>
-    /// Adds new object to pool if pool is empty
-    /// </summary>
-    public void AddewObject()
-    {
-        if (!Empty || !allowMore)
-            return;
-
-        GameObject obj = GameObject.Instantiate(prefab, m_Root.position, m_Root.rotation) as GameObject;
-        despawned.Add(obj);
-        obj.transform.SetParent(m_Root);
-        obj.SetActive(false);
-
-        if (ObjectsPool.Instance.debugMessages && debugMessages)
-            Debug.Log("New object of " + poolName + "added");
-    }
-
-    /// <summary>
-    /// Gets an item from pool
-    /// </summary>
-    /// <returns></returns>
-    public GameObject GetItem()
-    {
-        if (Empty)
+        /// <summary>
+        /// Clears and deletes pool
+        /// </summary>
+        public void ClearAndDestroy()
         {
-            if (allowMore)
-            {
-                AddewObject();
-                size++;
-            }
-            else
-                return null;
+            for (int i = 0; i < despawned.Count; i++)
+                Object.DestroyImmediate(despawned[i]);
+
+            despawned.Clear();
         }
 
-        GameObject obj = despawned[0];
-
-        if (obj == null)
-            return null;
-
-        despawned.Remove(obj);
-        spawned.Add(obj);
-        if(mode == DespawnMode.Deactivate)
-            obj.SetActive(true);
-        obj.transform.parent = null;
-
-        return obj;
-    }
-
-    /// <summary>
-    /// Send item to pool
-    /// </summary>
-    /// <param name="obj"></param>
-    public void PushItem(GameObject obj)
-    {
-        if (despawned.Contains(obj) || !spawned.Contains(obj))
-            return;
-
-        spawned.Remove(obj);
-        despawned.Add(obj);
-        if (mode == DespawnMode.Deactivate)
-            obj.SetActive(false);
-        else
-            obj.transform.position = despawnPos;
-        obj.transform.parent = m_Root;
-    }
-
-    /// <summary>
-    /// Clears and deletes pool
-    /// </summary>
-    public void ClearAndDestroy()
-    {
-        despawned.ForEach(go => Object.DestroyImmediate(go));
-        despawned.Clear();
+        /// <summary>
+        /// Despawns all spawned objects
+        /// </summary>
+        public void DespawnAll()
+        {
+            for (int i = 0; i < spawned.Count; i++)
+                Push(spawned[i]);
+        }
     }
 }

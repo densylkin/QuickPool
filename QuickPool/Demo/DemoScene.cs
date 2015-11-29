@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using QuickPool;
 
 [RequireComponent(typeof(ObjectsPool))]
 public class DemoScene : MonoBehaviour 
@@ -20,6 +21,8 @@ public class DemoScene : MonoBehaviour
         {
             GUILayout.Label("Spawned: " + pool.spawnedCount + "/" + pool.totalCount);
         }
+        if (GUILayout.Button("Despawn all"))
+            ObjectsPool.DespawnAll();
         GUILayout.EndVertical();
     }
 

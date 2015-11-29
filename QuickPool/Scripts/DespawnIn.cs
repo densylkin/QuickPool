@@ -1,18 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class DespawnIn : MonoBehaviour 
+namespace QuickPool
 {
-    public float time;
-
-    public void OnSpawn()
+    public class DespawnIn : MonoBehaviour
     {
-        StartCoroutine("Destroy");
-    }
+        public float time;
 
-    private IEnumerator Destroy()
-    {
-        yield return new WaitForSeconds(time);
-        gameObject.Despawn();
+        public void OnSpawn()
+        {
+            StartCoroutine("Destroy");
+        }
+
+        private IEnumerator Destroy()
+        {
+            yield return new WaitForSeconds(time);
+            gameObject.Despawn();
+        }
     }
 }
