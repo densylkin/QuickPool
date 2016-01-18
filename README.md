@@ -1,14 +1,12 @@
 # Unity-QuickPool
-
+[Asset store](http://u3d.as/jEu)
 Usage
 -----
 You can use quickpool in two ways:
 - Create PoolManager and configure your pools with editor 
-
 ![Imgur](http://i.imgur.com/mMy5Pr5.png)
 
 - Or create a Pool field (in this case you will need to register your pool somewhere in Start with PoolManager.RegisterPool())
-
 ![Imgur](http://i.imgur.com/N6jDhrr.png)
 
 Include QuickPool namespace
