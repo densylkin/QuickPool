@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace QuickPool
 {
-    public class PoolsManager : Singleton<PoolsManager>
+    public class PoolsManager : MonoBehaviour
     {
         private static PoolsManager instance;
         public static PoolsManager Instance

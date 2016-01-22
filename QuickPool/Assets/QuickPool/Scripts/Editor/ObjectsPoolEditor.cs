@@ -14,7 +14,7 @@ namespace QuickPool
         private GUIStyle background;
         private GUIStyle poolBackground;
         private GUIStyle dropBox;
-        private Texture2D particlesIcon;
+        //private Texture2D particlesIcon;
 
         private string searchStr = "";
 
@@ -37,7 +37,7 @@ namespace QuickPool
 
             dropBox.normal.textColor = Color.black;
 
-            particlesIcon = Resources.Load<Texture2D>("particles");
+            //particlesIcon = Resources.Load<Texture2D>("particles");
         }
 
         public override void OnInspectorGUI()

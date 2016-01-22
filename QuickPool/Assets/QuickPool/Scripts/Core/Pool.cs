@@ -258,7 +258,7 @@ namespace QuickPool
             spawned.Add(obj);
             if (mode == DespawnMode.Deactivate)
                 obj.SetActive(true);
-            obj.transform.parent = null;
+            obj.transform.SetParent(null, false);
 
             return obj;
         }
@@ -278,7 +278,7 @@ namespace QuickPool
                 obj.SetActive(false);
             else
                 obj.transform.position = despawnPos;
-            obj.transform.parent = m_Root;
+            obj.transform.SetParent(m_Root, false);
         }
 
         /// <summary>
