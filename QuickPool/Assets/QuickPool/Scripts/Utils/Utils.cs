@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using System.Collections;
 using System.Linq;
 
@@ -19,7 +21,7 @@ namespace QuickPool
             return root;
 
         }
-
+        #if UNITY_EDITOR
         public static int DrawBitMaskField(Rect aPosition, int aMask, System.Type aType, GUIContent aLabel)
         {
             var itemNames = System.Enum.GetNames(aType);
@@ -62,6 +64,7 @@ namespace QuickPool
             }
             return val;
         }
+        #endif
     }
 
 }
